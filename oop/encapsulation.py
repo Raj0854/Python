@@ -15,6 +15,6 @@ class person:
             print("age cannot be negative")
 
 Person = person("raj",21)
-print("Name :",person.get_name())
-print("Age :",person.get_age())
+print("Name :",Person.get_name())
+print("Age :",Person.get_age())
  
