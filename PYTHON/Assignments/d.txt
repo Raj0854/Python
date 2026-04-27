@@ -1,0 +1,3 @@
+hello
+# Write a function named copy_file that takes two file names as parameters and copies the content of one file to another.
+# Call the function with two existing file names.
