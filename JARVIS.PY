@@ -115,7 +115,7 @@ def split_commands(command):
 
     return [p.strip() for p in parts if p.strip()]
 
-# 🧠 Handle command (YOUR ORIGINAL LOGIC)
+# 🧠 Handle command ( ORIGINAL LOGIC)
 def handle_command(command):
     print("Processing:", command)
     if "my name is" in command or "i am" in command or "raj" in command:
