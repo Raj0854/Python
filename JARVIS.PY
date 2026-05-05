@@ -10,19 +10,19 @@ import json
 
 MEMORY_FILE = "memory.json"
 
+
 def load_memory():
     try:
         with open(MEMORY_FILE, "r") as file:
             return json.load(file)
     except:
-        return {
-            "owner": "",
-            "likes": []
-        }
+        return {"owner": "", "likes": []}
+
 
 def save_memory(memory):
     with open(MEMORY_FILE, "w") as file:
         json.dump(memory, file)
+
 
 memory = load_memory()
 if "data" not in memory:
@@ -30,14 +30,33 @@ if "data" not in memory:
 # Small delay
 time.sleep(1)
 
+
+# wake word
+def listen_for_wake_word():
+    print("\n🟡 Waiting for wake word...")
+
+    command = take_command()
+
+    if command == "":
+        return "none"
+
+    if "bye" in command or "stop" in command:
+        return "bye sir!"
+
+    if "jarvis" in command:
+        speak("Yes sir?")
+        return "wake"
+
+    return "none"
+
 # 🔊 Speak
 def speak(text):
     def run():
         print("Jarvis:", text)
-        engine = pyttsx3.init('sapi5')
-        voices = engine.getProperty('voices')
-        engine.setProperty('voice', voices[0].id)
-        engine.setProperty('rate', 170)
+        engine = pyttsx3.init("sapi5")
+        voices = engine.getProperty("voices")
+        engine.setProperty("voice", voices[0].id)
+        engine.setProperty("rate", 170)
         engine.say(text)
         engine.runAndWait()
         engine.stop()
@@ -45,6 +64,7 @@ def speak(text):
     t = threading.Thread(target=run)
     t.start()
     t.join()
+
 
 # 🎤 Listen
 def take_command():
@@ -72,6 +92,22 @@ def take_command():
         print("Error:", e)
         return ""
 
+# Faster listen for wake word
+def listen_fast():
+    r = sr.Recognizer()
+
+    try:
+        with sr.Microphone() as source:
+            print("...idle...")
+            audio = r.listen(source, timeout=2, phrase_time_limit=2)
+
+        command = r.recognize_google(audio)
+        print("Heard:", command)
+        return command.lower()
+
+    except:
+        return ""
+
 # ⚠️ Confirmation
 def confirm_action(action):
     speak(f"Do you want me to {action}? Say yes or no.")
@@ -84,7 +120,10 @@ def confirm_action(action):
 
         print("Confirmation heard:", response)
 
-        if any(word in response for word in ["yes", "yeah", "yup", "sure", "do it", "go ahead"]):
+        if any(
+            word in response
+            for word in ["yes", "yeah", "yup", "sure", "do it", "go ahead"]
+        ):
             return True
         elif any(word in response for word in ["no", "nope", "cancel", "stop"]):
             return False
@@ -93,15 +132,18 @@ def confirm_action(action):
 
     return False
 
+
 # 🧠 Clean command
 def clean_command(command):
     fillers = ["please", "can you", "could you", "jarvis", "for me"]
     for word in fillers:
         command = command.replace(word, "")
     return command.strip()
+
+
 # 🔥 Split multi-command
 def split_commands(command):
-    separators = [" and ", " then ", ",","for"]
+    separators = [" and ", " then ", ",", "for"]
     parts = [command]
 
     for sep in separators:
@@ -115,7 +157,8 @@ def split_commands(command):
 
     return [p.strip() for p in parts if p.strip()]
 
-# 🧠 Handle command ( ORIGINAL LOGIC)
+
+# 🧠 Handle command (YOUR ORIGINAL LOGIC)
 def handle_command(command):
     print("Processing:", command)
     if "my name is" in command or "i am" in command or "raj" in command:
@@ -158,40 +201,46 @@ def handle_command(command):
         except:
             speak("I could not understand what to remember")
     elif "what is my" in command or "who is my" in command:
-        key = command.replace("what is my"or "who is my", "").replace("who is my", "").strip()
+        key = (
+            command.replace("what is my" or "who is my", "")
+            .replace("who is my", "")
+            .strip()
+        )
 
         if key in memory["data"]:
             value = memory["data"][key]
             speak(f"Your {key} is {value}")
         else:
             speak(f"I don't know your {key} yet")
-    
+
     elif "what is my name" in command or "who am i" in command:
         if memory["owner"]:
             speak(f"Your name is {memory['owner']}")
         else:
-            speak("I don't know your name yet, please tell me by saying 'my name is ...'")
-    
+            speak(
+                "I don't know your name yet, please tell me by saying 'my name is ...'"
+            )
+
     elif "my fullname" in command or "what is my full name" in command:
         if memory["fullname"]:
             speak(f"Your full name is {memory['fullname']}, and i'm your Jarvis")
         else:
             speak("I don't know your full name yet, please tell me ")
-            
-    elif "what do i like" in command  or "what are my likes" in command:
+
+    elif "what do i like" in command or "what are my likes" in command:
         if memory["likes"]:
             likes_text = ", ".join(memory["likes"])
             speak(f"You like {likes_text}")
         else:
             speak("I don't know what you like yet")
-            
+
     elif "what do i dislike" in command or "what are my dislikes" in command:
         if memory["dislikes"]:
             dislikes_text = ", ".join(memory["dislikes"])
             speak(f"You dislike {dislikes_text}")
         else:
             speak("I don't know what you dislike yet")
-            
+
     elif "i dislike" in command:
         if not memory["owner"]:
             speak("Tell me your name first")
@@ -206,7 +255,6 @@ def handle_command(command):
         else:
             speak("I already know that")
 
-            
     elif "i like" in command:
         if not memory["owner"]:
             speak("Tell me your name first")
@@ -220,7 +268,7 @@ def handle_command(command):
             speak(f"Got it {memory['owner']}, you like {like}")
         else:
             speak("I already know that")
-    
+
     elif "what are my recent files" in command or "what are my recent file" in command:
         if memory["recent_files"]:
             files_text = ", ".join(memory["recent_files"])
@@ -241,7 +289,7 @@ def handle_command(command):
             speak(f"Got it {memory['owner']}, added {file} to recent files")
         else:
             speak("I already know that or invalid file name")
-    
+
     elif "time" in command:
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         speak(f"The time is {current_time}")
@@ -338,13 +386,20 @@ def handle_command(command):
         speak("i'm sorry sir, i am working to improve myself!")
     elif "who made you" in command or "who created you" in command:
         speak("I was created by Raj Gupta, a passionate coder and tech enthusiast.")
-    elif "what can you do" in command or "what things can you do" in command or "tell me about yourself" in command:
-        speak("i'm jarvis, your personal assistant. I can perform various tasks such as opening applications, searching the web, telling jokes, and remembering information about you. Just ask me to do something!")
-        
+    elif (
+        "what can you do" in command
+        or "what things can you do" in command
+        or "tell me about yourself" in command
+    ):
+        speak(
+            "i'm jarvis, your personal assistant. I can perform various tasks such as opening applications, searching the web, telling jokes, and remembering information about you. Just ask me to do something!"
+        )
+
     elif "Thank you" in command or "thanks" in command:
         speak("My pleasure sir, I'm here to assist you anytime!")
     else:
         speak("I did not understand that command")
+
 
 # 🔥 Smart search
 def smart_search(command):
@@ -386,26 +441,62 @@ def smart_search(command):
         webbrowser.open(f"https://www.google.com/search?q={query}")
 
     return True
+
+
 # 🤖 MAIN
 def jarvis():
-    speak(f"Hello sir, please tell me your name to go ahead?")
+    speak("System is online. Say Jarvis to activate.")
+
+    active_mode = False
 
     while True:
-        command = take_command()
-        command = clean_command(command)
 
-        if command == "":
-            continue
+        # 💤 IDLE MODE (only wake word)
+        while not active_mode:
+            command = listen_fast()
 
-        print("Processed:", command)
+            if command == "":
+                continue
 
-        # 🔥 FIRST check smart search
-        if smart_search(command):
-            continue
+            if "exit" in command:
+                speak("Shutting down")
+                return
 
-        commands = split_commands(command)
+            if "jarvis" in command:
+                speak("Activated")
+                active_mode = True
+                break
 
-        for cmd in commands:
-            handle_command(cmd)
+
+        # 🎯 ACTIVE MODE (normal assistant)
+        while active_mode:
+            command = take_command()
+            command = clean_command(command)
+
+            if command == "":
+                continue
+
+            print("Command:", command)
+
+            # 🔴 Exit completely
+            if "exit" in command:
+                speak("Shutting down")
+                return
+
+            # 💤 Go back to idle
+            if "stop listening" in command:
+                speak("Going idle")
+                active_mode = False
+                break
+
+            # 🔍 Smart search
+            if smart_search(command):
+                continue
+
+            # 🔀 Multi-command
+            commands = split_commands(command)
+
+            for cmd in commands:
+                handle_command(cmd)
 # Run
 jarvis()
